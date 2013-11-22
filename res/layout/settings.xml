@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+   
+
+    <RelativeLayout 
+        android:id="@+id/settingsRel1"
+        android:layout_width="match_parent"
+    	android:layout_height="wrap_content">
+        
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:text="Name: "
+            android:textSize="20sp" />
+
+   		 <EditText
+	        android:id="@+id/txtName"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:ems="10"
+	        android:inputType="textPersonName" 
+	        android:layout_toRightOf="@+id/textView1">
+        
+        	<requestFocus />
+   		</EditText>
+    </RelativeLayout>
+     
+	<RelativeLayout 
+	    android:id="@+id/settingsRel2"
+        android:layout_width="match_parent"
+    	android:layout_height="wrap_content"
+    	android:layout_below="@+id/settingsRel1">
+  		 
+	     <TextView
+	         android:id="@+id/textView2"
+	         android:layout_width="80dp"
+	         android:layout_height="wrap_content"
+	         android:text="Wins: "
+	         android:textSize="20sp" />
+
+   		 <TextView
+   		     android:id="@+id/lblWins"
+   		     android:layout_width="match_parent"
+   		     android:layout_height="wrap_content"
+   		     android:layout_toRightOf="@+id/textView2"
+   		     android:text="0 "
+   		     android:textSize="20sp" />
+	   
+ 	</RelativeLayout>
+ 	
+	<RelativeLayout 
+	    android:id="@+id/settingsRel3"
+        android:layout_width="match_parent"
+    	android:layout_height="wrap_content"
+    	android:layout_below="@+id/settingsRel2">
+  		 
+	    <TextView
+	        android:id="@+id/textView4"
+	        android:layout_width="80dp"
+	        android:layout_height="wrap_content"
+	        android:text="Loses: "
+	        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/lblLoses"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/textView4"
+        android:text="0"
+        android:textSize="20sp" />
+	    
+ 	</RelativeLayout>
+   
+
+    
+        
+</RelativeLayout>
+
