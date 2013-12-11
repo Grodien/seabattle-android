@@ -1,8 +1,17 @@
 package ch.hslu.appmo.seabattle;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import ch.hslu.appmo.seabattle.command.player.UpdateNameCommand;
 import ch.hslu.appmo.seabattle.command.server.PlayerFoundCommand;
-import ch.hslu.appmo.seabattle.command.server.PlayerReadyCommand;
 import ch.hslu.appmo.seabattle.command.server.ServerCommand;
 import ch.hslu.appmo.seabattle.command.server.ServerCommandHandler;
 import ch.hslu.appmo.seabattle.command.server.ServerCommandType;
@@ -12,16 +21,6 @@ import ch.hslu.appmo.seabattle.models.GameSettings;
 import ch.hslu.appmo.seabattle.models.Player;
 import ch.hslu.appmo.seabattle.models.PlayerSettings;
 import ch.hslu.appmo.seabattle.network.TCPClient;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.app.AlertDialog.Builder;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
 
 
 public class MainActivity extends Activity implements ServerCommandHandler {

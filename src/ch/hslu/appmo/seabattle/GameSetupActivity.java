@@ -2,7 +2,6 @@ package ch.hslu.appmo.seabattle;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Display;
 import android.view.Menu;
@@ -19,7 +18,6 @@ import ch.hslu.appmo.seabattle.command.server.ServerCommand;
 import ch.hslu.appmo.seabattle.command.server.ServerCommandHandler;
 import ch.hslu.appmo.seabattle.command.server.ServerCommandType;
 import ch.hslu.appmo.seabattle.models.Game;
-import ch.hslu.appmo.seabattle.models.Player;
 import ch.hslu.appmo.seabattle.network.TCPClient;
 import ch.hslu.appmo.seabattle.view.PlayFieldView;
 

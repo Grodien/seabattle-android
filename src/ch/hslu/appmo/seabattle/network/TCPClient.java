@@ -23,7 +23,7 @@ import ch.hslu.appmo.seabattle.command.server.ServerCommandType;
 
 public class TCPClient implements ServerCommandHandler {
 
-	private static final String HOST_NAME = "10.3.98.56";
+	private static final String HOST_NAME = "10.3.98.71";
 	private static final int TCP_PORT = 8222;
 	
 	private static TCPClient instance = null;

@@ -1,12 +1,10 @@
 package ch.hslu.appmo.seabattle;
 
-import ch.hslu.appmo.seabattle.models.PlayerSettings;
 import android.app.Activity;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.TextView;
+import ch.hslu.appmo.seabattle.models.PlayerSettings;
 
 public class SettingsActivity extends Activity {
 
