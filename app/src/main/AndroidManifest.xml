@@ -2,11 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ch.hslu.appmo.seabattle"
     android:versionCode="1"
-    android:versionName="1.0" >
-
-    <uses-sdk
-        android:minSdkVersion="10"
-        android:targetSdkVersion="18" />
+    android:versionName="1.0">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -15,34 +11,24 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme">
         <activity
             android:name="ch.hslu.appmo.seabattle.MainActivity"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait" >
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="ch.hslu.appmo.seabattle.SettingsActivity" 
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name="ch.hslu.appmo.seabattle.GameSearchActivity"
-            android:screenOrientation="portrait" >
-        </activity>
+        <activity android:name="ch.hslu.appmo.seabattle.SettingsActivity" />
         <activity
             android:name="ch.hslu.appmo.seabattle.GameSetupActivity"
-            android:label="@string/title_activity_game_setup"
-            android:screenOrientation="portrait" >
-        </activity>
+            android:label="@string/title_activity_game_setup" />
         <activity
             android:name="ch.hslu.appmo.seabattle.GameActivity"
             android:label="@string/title_activity_game"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-            android:screenOrientation="portrait" >
-        </activity>
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
     </application>
 
 </manifest>
