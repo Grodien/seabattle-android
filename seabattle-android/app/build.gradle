@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 29
     buildToolsVersion "29.0.2"
 
     defaultConfig {
         applicationId "ch.hslu.appmo.seabattle"
         minSdkVersion 26
-        targetSdkVersion 26
+        targetSdkVersion 29
     }
 
     buildTypes {
@@ -19,6 +19,7 @@ android {
 }
 
 dependencies {
-    implementation 'com.android.support:support-v4:26.1.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation "com.github.parse-community.Parse-SDK-Android:parse:1.18.5"
+    implementation 'com.github.parse-community:ParseLiveQuery-Android:1.1.0'
 }

@@ -18,6 +18,7 @@ import ch.hslu.appmo.seabattle.command.server.ServerCommand;
 import ch.hslu.appmo.seabattle.command.server.ServerCommandHandler;
 import ch.hslu.appmo.seabattle.command.server.ServerCommandType;
 import ch.hslu.appmo.seabattle.models.Game;
+import ch.hslu.appmo.seabattle.network.ParseClient;
 import ch.hslu.appmo.seabattle.network.TCPClient;
 import ch.hslu.appmo.seabattle.view.PlayFieldView;
 
@@ -26,7 +27,8 @@ public class GameSetupActivity extends Activity implements ServerCommandHandler 
 	private static final int HEIGHT_ADJUSTMENT = 120;
 	private int fWidth;
 	private int fHeight;
-	private TCPClient fTCPClient;
+	//private TCPClient fTCPClient;
+	private ParseClient parseClient;
 	private RelativeLayout fLayout;
 	private PlayFieldView fPlayFieldView;
 	private Button fBtnReadyUp;
@@ -45,12 +47,16 @@ public class GameSetupActivity extends Activity implements ServerCommandHandler 
 		fEnemyLabel = (TextView) findViewById(R.id.txtEnemy);
 		fEnemyReady = (TextView) findViewById(R.id.txtReady);
 		
-		fTCPClient = TCPClient.getInstance();
+		//fTCPClient = TCPClient.getInstance();
+		parseClient = ParseClient.getInstance();
 		
-		fTCPClient.subscribeToCommand(ServerCommandType.FullUpdate, this);
-		fTCPClient.subscribeToCommand(ServerCommandType.PlayerReady, this);
-		fTCPClient.subscribeToCommand(ServerCommandType.PlayerFound, this);
-		
+		//fTCPClient.subscribeToCommand(ServerCommandType.FullUpdate, this);
+		parseClient.subscribeToCommand(ServerCommandType.FullUpdate, this);
+		//fTCPClient.subscribeToCommand(ServerCommandType.PlayerReady, this);
+		parseClient.subscribeToCommand(ServerCommandType.PlayerReady, this);
+		//fTCPClient.subscribeToCommand(ServerCommandType.PlayerFound, this);
+		parseClient.subscribeToCommand(ServerCommandType.PlayerFound, this);
+
 		Display display = getWindowManager().getDefaultDisplay();
 		fWidth = display.getWidth();
 		fHeight = display.getHeight();
@@ -64,8 +70,10 @@ public class GameSetupActivity extends Activity implements ServerCommandHandler 
 		updateReadyLabel();
 		
 		fLayout.addView(fPlayFieldView);
-		
-		fTCPClient.sendCommand(new RenewGameFieldCommand());
+
+
+		//fTCPClient.sendCommand(new RenewGameFieldCommand());
+		//parseClient.sendCommand(new RenewGameFieldCommand());
 	}
 	
 	public void updateReadyLabel() {
@@ -134,12 +142,13 @@ public class GameSetupActivity extends Activity implements ServerCommandHandler 
 	}
 	
 	public void readyUp(View view) {
-		fTCPClient.sendCommand(new ReadyCommand(true));
+		//fTCPClient.sendCommand(new ReadyCommand(true));
 		fGameInstance.getMe().setReady(true);
 		fBtnReadyUp.setEnabled(false);
 	}
 	
 	public void renewGameField(View view) {
-		fTCPClient.sendCommand(new RenewGameFieldCommand());
+		parseClient.sendCommand(new RenewGameFieldCommand());
+		//fTCPClient.sendCommand(new RenewGameFieldCommand());
 	}
 }

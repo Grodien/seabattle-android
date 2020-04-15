@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
+import java.util.UUID;
+
 
 public class PlayerSettings {
 	
@@ -15,7 +17,8 @@ public class PlayerSettings {
 		}
 		return instance;
 	}
-	
+
+	private String playerId;
 	private String fPlayerName;
 	private int fWins;
 	private int fLoses;
@@ -32,6 +35,7 @@ public class PlayerSettings {
 	
 	public void load() {
 		SharedPreferences sharedPreferences = fActivity.getPreferences(Activity.MODE_PRIVATE);
+		playerId = sharedPreferences.getString("id", UUID.randomUUID().toString().substring(0, 8));
 		fPlayerName = sharedPreferences.getString("name", null);
 		fWins = sharedPreferences.getInt("wins", 0);
 		fLoses = sharedPreferences.getInt("loses", 0);
@@ -40,6 +44,7 @@ public class PlayerSettings {
 	public void save() {
 		SharedPreferences sharedPreferences = fActivity.getPreferences(Activity.MODE_PRIVATE);
 		Editor editor = sharedPreferences.edit();
+		editor.putString("id", playerId);
 		editor.putString("name", fPlayerName);
 		editor.putInt("wins", fWins);
 		editor.putInt("loses", fLoses);
@@ -68,5 +73,9 @@ public class PlayerSettings {
 
 	public void setLoses(int loses) {
 		fLoses = loses;
+	}
+
+	public String getPlayerId() {
+		return playerId;
 	}
 }

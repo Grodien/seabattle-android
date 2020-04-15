@@ -20,6 +20,7 @@ import ch.hslu.appmo.seabattle.models.Game;
 import ch.hslu.appmo.seabattle.models.GameSettings;
 import ch.hslu.appmo.seabattle.models.Player;
 import ch.hslu.appmo.seabattle.models.PlayerSettings;
+import ch.hslu.appmo.seabattle.network.ParseClient;
 import ch.hslu.appmo.seabattle.network.TCPClient;
 
 
@@ -29,6 +30,7 @@ public class MainActivity extends Activity implements ServerCommandHandler {
 	private Button fSettingsButton;
 	private TCPClient fTCPClient;
 	private ProgressDialog fProgressDialog;
+	ParseClient parseClient;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +38,7 @@ public class MainActivity extends Activity implements ServerCommandHandler {
 		setContentView(R.layout.main);
 		
 		PlayerSettings.getInstance(this);
+		parseClient = ParseClient.getInstance();
 		
 		fPlayOnlineButton = (Button)findViewById(R.id.btnPlayOnline);
 		fSettingsButton = (Button)findViewById(R.id.btnSettings);
@@ -57,7 +60,8 @@ public class MainActivity extends Activity implements ServerCommandHandler {
 						}
 					}).show();
 				} else {
-					startGameSearch();
+					startGameSearchParse();
+					//startGameSearch();
 				}
 			}
 		});
@@ -71,7 +75,33 @@ public class MainActivity extends Activity implements ServerCommandHandler {
 			}
 		});
 	}
-	
+
+	public void startGameSearchParse() {
+		parseClient.queueOnline();
+
+		parseClient.subscribeToCommand(ServerCommandType.ServerSettings, this);
+		parseClient.subscribeToCommand(ServerCommandType.PlayerFound, this);
+
+		fProgressDialog = new ProgressDialog(MainActivity.this);
+		fProgressDialog.setMessage("Searching for Player...");
+		fProgressDialog.setCancelable(true);
+		fProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				parseClient.dequeue();
+			}
+		});
+
+		runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				fProgressDialog.show();
+			}
+		});
+	}
+
 	public void startGameSearch() {
 		fTCPClient = TCPClient.getInstance();
 		
@@ -90,6 +120,7 @@ public class MainActivity extends Activity implements ServerCommandHandler {
 			
 			@Override
 			public void onCancel(DialogInterface dialog) {
+
 				fTCPClient.disconnect();
 			}
 		});      

@@ -28,4 +28,8 @@ public abstract class PlayerCommand extends Command {
 		
 		return builder.toString();
 	}
+
+	public PlayerCommandType getfCommandType() {
+		return fCommandType;
+	}
 }
