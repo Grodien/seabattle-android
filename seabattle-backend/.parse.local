@@ -1,0 +1,10 @@
+{
+  "applications": {
+    "Seabattle": {
+      "applicationId": "axfe93yHtwMdPoeaXT8iXkyuk1IEI8RDqj9hy9Io"
+    },
+    "_default": {
+      "link": "Seabattle"
+    }
+  }
+}
