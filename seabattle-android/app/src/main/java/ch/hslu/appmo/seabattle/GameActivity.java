@@ -1,8 +1,10 @@
 package ch.hslu.appmo.seabattle;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,6 +22,7 @@ import ch.hslu.appmo.seabattle.models.Game;
 import ch.hslu.appmo.seabattle.models.GameSettings;
 import ch.hslu.appmo.seabattle.models.Player;
 import ch.hslu.appmo.seabattle.models.PlayerSettings;
+import ch.hslu.appmo.seabattle.network.ParseClient;
 import ch.hslu.appmo.seabattle.network.TCPClient;
 import ch.hslu.appmo.seabattle.view.PlayFieldView;
 
@@ -27,7 +30,8 @@ public class GameActivity extends Activity implements ServerCommandHandler {
 
 	private RelativeLayout fMyLayout;
 	private RelativeLayout fEnemyLayout;
-	private TCPClient fTCPClient;
+	//private TCPClient fTCPClient;
+	private ParseClient parseClient;
 	private int fWidth;
 	private int fHeight;
 	private PlayFieldView fEnemyPlayFieldView;
@@ -37,8 +41,9 @@ public class GameActivity extends Activity implements ServerCommandHandler {
 	private Toast fMyTurnToast;
 	private Toast fEnemyTurnToast;
 	
-	
+	private Handler handler = new Handler();
 
+	@SuppressLint("ClickableViewAccessibility")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -52,13 +57,17 @@ public class GameActivity extends Activity implements ServerCommandHandler {
 		
 		fTxtStatus = (TextView) findViewById(R.id.txtStatus);
 		fTxtStatus.setVisibility(View.INVISIBLE);
-		
-		fTCPClient = TCPClient.getInstance();
+
+		//fTCPClient = TCPClient.getInstance();
+		parseClient = ParseClient.getInstance();
 		fGameInstance = Game.getInstance();
-		
-		fTCPClient.subscribeToCommand(ServerCommandType.FullUpdate, this);
-		fTCPClient.subscribeToCommand(ServerCommandType.PartialUpdate, this);
-		fTCPClient.subscribeToCommand(ServerCommandType.Win, this);
+
+		//fTCPClient.subscribeToCommand(ServerCommandType.FullUpdate, this);
+		//fTCPClient.subscribeToCommand(ServerCommandType.PartialUpdate, this);
+		//fTCPClient.subscribeToCommand(ServerCommandType.Win, this);
+		parseClient.subscribeToCommand(ServerCommandType.FullUpdate, this);
+		parseClient.subscribeToCommand(ServerCommandType.PartialUpdate, this);
+		parseClient.subscribeToCommand(ServerCommandType.Win, this);
 		
 		Display display = getWindowManager().getDefaultDisplay();
 		fWidth = display.getWidth();
@@ -77,17 +86,19 @@ public class GameActivity extends Activity implements ServerCommandHandler {
 		fEnemyPlayFieldView.setOnTouchListener(new View.OnTouchListener() {
 			
 			@Override
-			public boolean onTouch(View arg0, MotionEvent arg1) {
-				
-				if (fGameInstance.getTurn() == fGameInstance.getMe()) {
-					int fieldSize = arg0.getWidth() / GameSettings.SIZE;
-					
-					int x = (int) (arg1.getX() / fieldSize);
-					int y = (int) (arg1.getY() / fieldSize);
-					
-					if (x < GameSettings.SIZE && y < GameSettings.SIZE) {
-						PlayerShootCommand cmd = new PlayerShootCommand(x,y);
-						fTCPClient.sendCommand(cmd);
+			public boolean onTouch(View arg0, MotionEvent event) {
+				if (event.getAction() == MotionEvent.ACTION_DOWN) {
+					if (fGameInstance.getTurn() == fGameInstance.getMe()) {
+						int fieldSize = arg0.getWidth() / GameSettings.SIZE;
+
+						int x = (int) (event.getX() / fieldSize);
+						int y = (int) (event.getY() / fieldSize);
+
+						if (x < GameSettings.SIZE && y < GameSettings.SIZE) {
+							PlayerShootCommand cmd = new PlayerShootCommand(x, y);
+							//fTCPClient.sendCommand(cmd);
+							parseClient.sendCommand(cmd);
+						}
 					}
 				}
 				
@@ -173,12 +184,15 @@ public class GameActivity extends Activity implements ServerCommandHandler {
 					});
 					
 				}
-			
-				fTCPClient.disconnect();
-				
-				Intent intent = new Intent(GameActivity.this, MainActivity.class);
-			    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);   
-			    startActivity(intent);
+
+				handler.postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						Intent intent = new Intent(GameActivity.this, MainActivity.class);
+						intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+						startActivity(intent);
+					}
+				}, 5000);
 				
 				break;
 				

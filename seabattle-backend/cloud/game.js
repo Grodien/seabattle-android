@@ -43,14 +43,17 @@ module.exports.createGame = async function createGame(p1, p2) {
         entry.set("gameSize", config.get('size'));
         entry.set("gamefield1", createRandomGamefield(config));
         entry.set("gamefield2", createRandomGamefield(config));
+        entry.set("player1ready", false);
+        entry.set("player2ready", false);
+        entry.set("gamestate", 0);
         entry.save();
 
-        messagesModule.createFullUpdateMessage(p1.get('playerId'), entry.get('gamefield1'), "1", "0");
-        messagesModule.createFullUpdateMessage(p2.get('playerId'), entry.get('gamefield2'), "1", "0");
+        messagesModule.createFullUpdateMessage(p1.get('playerId'), entry.get('gamefield1'), true, false);
+        messagesModule.createFullUpdateMessage(p2.get('playerId'), entry.get('gamefield2'), true, false);
     }
 };
 
-module.exports.getConfig = async function getConfig() {
+async function getConfig() {
     const configQuery = new Parse.Query("Config");
     const results = await configQuery.find();
 
@@ -61,8 +64,9 @@ module.exports.getConfig = async function getConfig() {
         return null;
     }
 };
+module.exports.getConfig = getConfig;
 
-module.exports.createRandomGamefield = function createRandomGamefield(config) {
+function createRandomGamefield(config) {
     console.log(`Creating gamefield`);
     const size = parseInt(config.get('size'));
     const ultimate = parseInt(config.get('ultimateShips'));
@@ -113,6 +117,8 @@ module.exports.createRandomGamefield = function createRandomGamefield(config) {
 
     return null
 }
+
+module.exports.createRandomGamefield = createRandomGamefield;
 
 function getGamefieldValueAtIndex(gamefield, size, x, y) {
     return gamefield.substr(x * size + y, 1);
@@ -201,5 +207,258 @@ module.exports.findPlayersGame = async function findPlayersGame(playerId) {
     query.descending("createdAt");
     return query.find();
 }
+
+module.exports.startGame = async function startGame(game) {
+    console.log(`Starting Game`);
+
+    game.set('gamestate', 1);
+    game.set('activePlayer', game.get('player1'));
+    messagesModule.createReadyMessage(game.get('player1'), true, true, true);
+    messagesModule.createReadyMessage(game.get('player2'), true, true, false);
+    game.save();
+};
+
+module.exports.shoot = async function shoot(game, playerId, x, y) {
+
+    if (game.get('gamestate') === 1 && game.get('activePlayer') === playerId) {
+        var size = Number(game.get('gameSize'));
+        var gamefieldKey;
+        var thisPlayerKey
+        var otherPlayerKey;
+        if (playerId === game.get('player1')) {
+            otherPlayerKey = 'player2';
+            gamefieldKey = 'gamefield2';
+            thisPlayerGamefieldKey = 'gamefield1';
+        } else {
+            otherPlayerKey = 'player1';
+            gamefieldKey = 'gamefield1';
+            thisPlayerGamefieldKey = 'gamefield2';
+        }
+        var gamefield = game.get(gamefieldKey);
+
+        var cell = getGamefieldValueAtIndex(gamefield, size, x, y);
+        if (cell === VALUE_FREE) {
+            console.log(`Empty cell hit at x=${x}, y=${y}`);
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y, VALUE_FREE_HIT);
+            game.set(gamefieldKey, gamefield);
+            game.set('activePlayer', game.get(otherPlayerKey));
+            game.save().then((game) => {
+                    messagesModule.createPartialUpdateMessage(playerId, x, y, VALUE_FREE_HIT, false, false);
+                    messagesModule.createPartialUpdateMessage(game.get(otherPlayerKey), x, y, VALUE_FREE_HIT, true, true);
+                }
+            );
+        } else if (cell === VALUE_SHIP) {
+            console.log(`Ship cell hit at x=${x}, y=${y}`);
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y, VALUE_SHIP_HIT);
+            if (isShipDestroyed(gamefield, size, x, y)) {
+                gamefield = destroyShipSurroundings(gamefield, size, x, y);
+                game.set(gamefieldKey, gamefield);
+                if (hasMoreShips(gamefield)) {
+                    game.save().then((game) => {
+                            messagesModule.createFullUpdateMessage(playerId, gamefield.replace(/1/g, VALUE_FREE), false, true);
+                            messagesModule.createFullUpdateMessage(game.get(otherPlayerKey), gamefield, true, false);
+                        }
+                    );
+                } else {
+                    console.log(`Game over -> player ${playerId} wins`);
+                    game.set('gamestate', 2);
+                    game.save().then((game) => {
+                            addWin(playerId);
+                            addLose(game.get(otherPlayerKey));
+                            messagesModule.createFullUpdateMessage(playerId, gamefield, false, false);
+                            messagesModule.createFullUpdateMessage(game.get(otherPlayerKey), gamefield, true, false);
+                            messagesModule.createFullUpdateMessage(game.get(otherPlayerKey), game.get(thisPlayerGamefieldKey), false, false);
+
+                            messagesModule.createWinMessage(playerId, true);
+                            messagesModule.createWinMessage(game.get(otherPlayerKey), false);
+                        }
+                    );
+                }
+            } else {
+                game.set(gamefieldKey, gamefield);
+                game.save().then((game) => {
+                        messagesModule.createPartialUpdateMessage(playerId, x, y, VALUE_SHIP_HIT, false, true);
+                        messagesModule.createPartialUpdateMessage(game.get(otherPlayerKey), x, y, VALUE_SHIP_HIT, true, false);
+                    }
+                );
+            }
+        } else {
+            console.log(`Already shot at x=${x}, y=${y}`);
+        }
+    } else {
+        console.log(`Failed to shoot! Gamestate=${game.get('gamestate')}, activePlayer=${game.get('activePlayer')}, playerId=${playerId}`);
+    }
+};
+
+async function addWin(playerId) {
+    console.log(`Add win to player=${playerId}`);
+    const playerQuery = new Parse.Query("Players");
+    playerQuery.equalTo('playerId', playerId);
+    const playerResults = await playerQuery.find();
+
+    if (playerResults.length > 0) {
+        var player = playerResults[0];
+        player.set('wins', Number(player.get('wins')) + 1);
+        console.log(`total wins=${player.get('wins')}`);
+        player.save();
+    }
+}
+
+async function addLose(playerId) {
+    console.log(`Add lose to player=${playerId}`);
+    const playerQuery = new Parse.Query("Players");
+    playerQuery.equalTo('playerId', playerId);
+    const playerResults = await playerQuery.find();
+
+    if (playerResults.length > 0) {
+        var player = playerResults[0];
+        player.set('loses', Number(player.get('loses')) + 1);
+        console.log(`total loses=${player.get('loses')}`);
+        player.save();
+    }
+}
+
+function isShipDestroyed(gamefield, size, x, y) {
+    while ((isValidCoord(size, x + 1, y))
+    && (getGamefieldValueAtIndex(gamefield, size, x + 1, y) != VALUE_FREE)
+    && (getGamefieldValueAtIndex(gamefield, size, x + 1, y) != VALUE_FREE_HIT)) {
+        x++;
+        if (getGamefieldValueAtIndex(gamefield, size, x, y) == VALUE_SHIP) {
+            return false;
+        }
+    }
+    while ((isValidCoord(size, x - 1, y))
+    && (getGamefieldValueAtIndex(gamefield, size, x - 1, y) != VALUE_FREE)
+    && (getGamefieldValueAtIndex(gamefield, size, x - 1, y) != VALUE_FREE_HIT)) {
+        x--;
+        if (getGamefieldValueAtIndex(gamefield, size, x, y) == VALUE_SHIP) {
+            return false;
+        }
+    }
+    while ((isValidCoord(size, x, y - 1))
+    && (getGamefieldValueAtIndex(gamefield, size, x, y - 1) != VALUE_FREE)
+    && (getGamefieldValueAtIndex(gamefield, size, x, y - 1) != VALUE_FREE_HIT)) {
+        y--;
+        if (getGamefieldValueAtIndex(gamefield, size, x, y) == VALUE_SHIP) {
+            return false;
+        }
+    }
+    while ((isValidCoord(size, x, y + 1))
+    && (getGamefieldValueAtIndex(gamefield, size, x, y + 1) != VALUE_FREE)
+    && (getGamefieldValueAtIndex(gamefield, size, x, y + 1) != VALUE_FREE_HIT)) {
+        y++;
+        if (getGamefieldValueAtIndex(gamefield, size, x, y) == VALUE_SHIP) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function destroyShipSurroundings(gamefield, size, x, y) {
+
+    while (isValidCoord(size, x + 1, y) && getGamefieldValueAtIndex(gamefield, size, x + 1, y) == VALUE_SHIP_HIT) {
+        if (isValidCoord(size, x, y + 1)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y + 1, VALUE_FREE_HIT);
+        }
+        if (isValidCoord(size, x, y - 1)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y - 1, VALUE_FREE_HIT);
+        }
+        x++;
+        if (isValidCoord(size, x, y + 1)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y + 1, VALUE_FREE_HIT);
+        }
+        if (isValidCoord(size, x, y - 1)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y - 1, VALUE_FREE_HIT);
+        }
+    }
+    if (isValidCoord(size, x + 1, y + 1)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x + 1, y + 1, VALUE_FREE_HIT);
+    }
+    if (isValidCoord(size, x + 1, y - 1)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x + 1, y - 1, VALUE_FREE_HIT);
+    }
+    if (isValidCoord(size, x + 1, y)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x + 1, y, VALUE_FREE_HIT);
+    }
+    while (isValidCoord(size, x - 1, y) && getGamefieldValueAtIndex(gamefield, size, x - 1, y) == VALUE_SHIP_HIT) {
+        if (isValidCoord(size, x, y + 1)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y + 1, VALUE_FREE_HIT);
+        }
+        if (isValidCoord(size, x, y - 1)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y - 1, VALUE_FREE_HIT);
+        }
+        x--;
+        if (isValidCoord(size, x, y + 1)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y + 1, VALUE_FREE_HIT);
+        }
+        if (isValidCoord(size, x, y - 1)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y - 1, VALUE_FREE_HIT);
+        }
+    }
+    if (isValidCoord(size, x - 1, y + 1)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x - 1, y + 1, VALUE_FREE_HIT);
+    }
+    if (isValidCoord(size, x - 1, y - 1)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x - 1, y - 1, VALUE_FREE_HIT);
+    }
+    if (isValidCoord(size, x - 1, y)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x - 1, y, VALUE_FREE_HIT);
+    }
+    while (isValidCoord(size, x, y + 1) && getGamefieldValueAtIndex(gamefield, size, x, y + 1) == VALUE_SHIP_HIT) {
+        if (isValidCoord(size, x + 1, y)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x + 1, y, VALUE_FREE_HIT);
+        }
+        if (isValidCoord(size, x - 1, y)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x - 1, y, VALUE_FREE_HIT);
+        }
+        y++;
+        if (isValidCoord(size, x + 1, y)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x + 1, y, VALUE_FREE_HIT);
+        }
+        if (isValidCoord(size, x - 1, y)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x - 1, y, VALUE_FREE_HIT);
+        }
+    }
+    if (isValidCoord(size, x + 1, y + 1)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x + 1, y + 1, VALUE_FREE_HIT);
+    }
+    if (isValidCoord(size, x - 1, y + 1)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x - 1, y + 1, VALUE_FREE_HIT);
+    }
+    if (isValidCoord(size, x, y + 1)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y + 1, VALUE_FREE_HIT);
+    }
+    while (isValidCoord(size, x, y - 1) && getGamefieldValueAtIndex(gamefield, size, x, y - 1) == VALUE_SHIP_HIT) {
+        if (isValidCoord(size, x + 1, y)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x + 1, y, VALUE_FREE_HIT);
+        }
+        if (isValidCoord(size, x - 1, y)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x - 1, y, VALUE_FREE_HIT);
+        }
+        y--;
+        if (isValidCoord(size, x + 1, y)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x + 1, y, VALUE_FREE_HIT);
+        }
+        if (isValidCoord(size, x - 1, y)) {
+            gamefield = replaceGamefieldValueAtIndex(gamefield, size, x - 1, y, VALUE_FREE_HIT);
+        }
+    }
+    if (isValidCoord(size, x + 1, y - 1)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x + 1, y - 1, VALUE_FREE_HIT);
+    }
+    if (isValidCoord(size, x - 1, y - 1)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x - 1, y - 1, VALUE_FREE_HIT);
+    }
+    if (isValidCoord(size, x, y - 1)) {
+        gamefield = replaceGamefieldValueAtIndex(gamefield, size, x, y - 1, VALUE_FREE_HIT);
+    }
+
+    return gamefield;
+}
+
+function hasMoreShips(gamefield) {
+    return gamefield.includes(VALUE_SHIP);
+}
+
 
 

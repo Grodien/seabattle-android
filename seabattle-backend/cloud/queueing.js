@@ -39,7 +39,7 @@ Parse.Cloud.define("queue", async (request) => {
         entry.set("playerName", playerName);
         entry.save().then((player) => {
             // Success
-            console.log('player added to queue');
+            checkEnoughPlayers();
         }, (error) => {
             // Save fails
             console.log('Failed to add player to queue, with error code: ' + error.message);
@@ -47,16 +47,17 @@ Parse.Cloud.define("queue", async (request) => {
     }
 
     messageModule.createGameSettingsMessage(playerId)
-
-    checkEnoughPlayers();
 });
 
 async function checkEnoughPlayers() {
     const query = new Parse.Query("Queue");
     const results = await query.find();
+    console.log('Checking Players in Queue...');
+
     if (results.length > 1) {
         let p1 = results[0];
         let p2 = results[1];
+        console.log('Enough players in queue -> Creating Game');
 
         gameModule.createGame(p1, p2);
 

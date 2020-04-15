@@ -113,7 +113,9 @@ public class GameSetupActivity extends Activity implements ServerCommandHandler 
 					
 					@Override
 					public void run() {
-						fPlayFieldView.invalidate();
+						if (fPlayFieldView != null) {
+							fPlayFieldView.invalidate();
+						}
 					}
 				});
 				
@@ -143,6 +145,7 @@ public class GameSetupActivity extends Activity implements ServerCommandHandler 
 	
 	public void readyUp(View view) {
 		//fTCPClient.sendCommand(new ReadyCommand(true));
+		parseClient.sendCommand(new ReadyCommand(true));
 		fGameInstance.getMe().setReady(true);
 		fBtnReadyUp.setEnabled(false);
 	}

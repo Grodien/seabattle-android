@@ -31,7 +31,7 @@ public class PlayField {
 	public void updateWithData(String data) {
 		for (int i = 0; i < GameSettings.SIZE; i++) {
 			for (int j = 0; j < GameSettings.SIZE; j++) {
-				fFieldData[j][i] = Integer.parseInt(data.substring(i*GameSettings.SIZE+j, i*GameSettings.SIZE+j+1));
+				fFieldData[i][j] = Integer.parseInt(data.substring(i*GameSettings.SIZE+j, i*GameSettings.SIZE+j+1));
 			}
 		}
 	}

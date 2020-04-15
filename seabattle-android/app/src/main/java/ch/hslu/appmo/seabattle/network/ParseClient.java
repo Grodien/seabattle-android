@@ -11,7 +11,9 @@ import com.parse.livequery.SubscriptionHandling;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import ch.hslu.appmo.seabattle.command.Command;
@@ -27,6 +29,7 @@ public class ParseClient {
     private static ParseClient instance = null;
     private Map<ServerCommandType, ServerCommandHandler> handlers;
     private ParseLiveQueryClient parseLiveQueryClient = null;
+    private List<ServerCommand> unhandledCommands = new ArrayList<>();
 
     public static synchronized ParseClient getInstance() {
         if (instance == null) {
@@ -62,6 +65,7 @@ public class ParseClient {
                     commandHandler.handleCommand(command);
                 } else {
                     System.out.println("No handler for " + command.getCommandType().toString());
+                    unhandledCommands.add(command);
                 }
             }
         });
@@ -69,6 +73,14 @@ public class ParseClient {
 
     public void subscribeToCommand(ServerCommandType type, ServerCommandHandler handler) {
         handlers.put(type, handler);
+
+        for (int i = 0; i < unhandledCommands.size(); i ++) {
+            ServerCommand serverCommand = unhandledCommands.get(i);
+            if (type.equals(serverCommand.getCommandType())) {
+                handler.handleCommand(serverCommand);
+                unhandledCommands.remove(i--);
+            }
+        }
     }
 
     public void queueOnline() {

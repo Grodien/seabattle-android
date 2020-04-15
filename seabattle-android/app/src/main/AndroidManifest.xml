@@ -25,10 +25,12 @@
         <activity android:name="ch.hslu.appmo.seabattle.SettingsActivity" />
         <activity
             android:name="ch.hslu.appmo.seabattle.GameSetupActivity"
-            android:label="@string/title_activity_game_setup" />
+            android:label="@string/title_activity_game_setup"
+            android:screenOrientation="portrait" />
         <activity
             android:name="ch.hslu.appmo.seabattle.GameActivity"
             android:label="@string/title_activity_game"
+            android:screenOrientation="portrait"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
     </application>
 

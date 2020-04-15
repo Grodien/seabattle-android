@@ -55,8 +55,8 @@ public class PlayFieldView extends View {
 		
 		int fieldSize = fSize / GameSettings.SIZE;
 		
-		for (int i = 0; i < GameSettings.SIZE; i++) {
-			for (int j = 0; j < GameSettings.SIZE; j++) {
+		for (int j = 0; j < GameSettings.SIZE; j++) {
+			for (int i = 0; i < GameSettings.SIZE; i++) {
 				switch (playfield.getFieldData(i, j)) {
 					case PlayField.VALUE_FREE:
 						fColorBlack.setStrokeWidth(2);
